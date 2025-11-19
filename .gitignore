@@ -1,0 +1,55 @@
+# MkDocs build artifacts
+site/
+.cache/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+
+# Virtual environments
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation builds
+docs/_build/
+docs/.doctrees/
+
+# MkDocs specific
+mkdocs-material/
+.mkdocs/
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+.history/
+
+.rhsm
+
+ansible-plugins-extracted*/
+.cursor/
+
+.secrets/
+*.tgz

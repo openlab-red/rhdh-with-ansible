@@ -1,0 +1,11 @@
+# Group: Platform Team
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform-team
+  description: Platform Engineering Team responsible for infrastructure and developer experience
+spec:
+  type: team
+  parent: openlab-red
+  children: []
+  members: []

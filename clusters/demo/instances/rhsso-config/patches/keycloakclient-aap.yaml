@@ -1,0 +1,17 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: aap-client
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  client:
+    redirectUris:
+      # AAP OIDC callback URLs
+      - "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com/api/gateway/social/complete/*"
+      - "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com/*"
+    webOrigins:
+      - "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+      - "+" # This allows redirect URIs to be valid web origins
+    baseUrl: "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"

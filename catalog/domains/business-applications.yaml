@@ -1,0 +1,8 @@
+# Domain: Business Applications
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: business-applications
+  description: Business applications and services domain
+spec:
+  owner: app-dev-team

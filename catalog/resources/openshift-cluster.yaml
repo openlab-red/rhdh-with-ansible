@@ -1,0 +1,17 @@
+# Resource: OpenShift Cluster
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: openshift-cluster
+  description: OpenShift Container Platform cluster
+  tags:
+    - kubernetes
+    - openshift
+    - infrastructure
+  links:
+    - url: https://console-openshift-console.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com
+      title: OpenShift Console
+      icon: dashboard
+spec:
+  type: kubernetes-cluster
+  owner: platform-team

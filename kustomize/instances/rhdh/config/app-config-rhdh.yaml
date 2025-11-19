@@ -1,0 +1,226 @@
+app:
+  title: Red Hat Developer Hub with Ansible
+  baseUrl: ${BASE_URL}
+  
+backend:
+  baseUrl: ${BASE_URL}
+  cors:
+    origin: ${BASE_URL}
+
+  # External Access configuration for API authentication
+  auth:
+    externalAccess:
+      - type: static
+        options:
+          token: ${RHDH_API_TOKEN}
+          subject: external-access
+
+
+# Organization configuration
+organization:
+  name: AAP Developer Hub
+
+# Proxy configuration for AAP API
+proxy:
+  reviveConsumedRequestBodies: true
+  endpoints:
+    '/api/controller/v2':
+      target: ${AAP_BASE_URL}/api/controller/v2
+      changeOrigin: true
+      headers:
+        Authorization: 'Bearer ${AAP_TOKEN}'
+        Accept: 'application/json'
+        Content-Type: 'application/json'
+    '/api/gateway/v1':
+      target: ${AAP_BASE_URL}/api/gateway/v1
+      changeOrigin: true
+      headers:
+        Authorization: 'Bearer ${AAP_TOKEN}'
+        Accept: 'application/json'
+        Content-Type: 'application/json'
+    # Uncomment the following to disable the proxy for the AAP unprotected from Backstage authentication
+    # '/api/controller/v2':
+    #   target: ${AAP_BASE_URL}/api/controller/v2
+    #   changeOrigin: true
+    #   credentials: 'dangerously-allow-unauthenticated'
+    #   allowedHeaders: ['Authorization']
+    #   headers:
+    #     Accept: 'application/json'
+    #     Content-Type: 'application/json'
+    # '/api/gateway/v1':
+    #   target: ${AAP_BASE_URL}/api/gateway/v1
+    #   changeOrigin: true
+    #   credentials: 'dangerously-allow-unauthenticated'
+    #   allowedHeaders: ['Authorization']
+    #   headers:
+    #     Accept: 'application/json'
+    #     Content-Type: 'application/json'
+
+# Ansible Automation Platform configuration
+ansible:
+  creatorService:
+    baseUrl: 127.0.0.1
+    port: '8000'
+  rhaap:
+    baseUrl: ${AAP_BASE_URL}
+    token: ${AAP_TOKEN}
+    checkSSL: false
+  automationHub:
+    baseUrl: ${AUTOMATION_HUB_URL}
+    token: ${AUTOMATION_HUB_TOKEN}
+
+# Orchestrator configuration
+# SonataFlow Data Index Service URL for workflow execution
+orchestrator:
+  dataIndexService:
+    url: ${ORCHESTRATOR_DATA_INDEX_URL}
+
+# GitHub Integration configuration
+integrations:
+  github:
+    - host: ${GITHUB_INTEGRATION_HOST_DOMAIN}
+      apps:
+        - appId: ${GITHUB_INTEGRATION_APP_ID}
+          clientId: ${GITHUB_INTEGRATION_CLIENT_ID}
+          clientSecret: ${GITHUB_INTEGRATION_CLIENT_SECRET}
+          privateKey: |
+            ${GITHUB_INTEGRATION_PRIVATE_KEY_FILE}
+
+# Catalog configuration with GitHub provider
+catalog:
+  orphanStrategy: delete
+  rules:
+    - allow: [Component, System, API, Resource, Location, Template, User, Group, Domain]
+  
+  providers:
+    github:
+      # Use a unique ID for your provider instance
+      openlabred:
+        organization: "${GITHUB_INTEGRATION_ORGANIZATION}"
+        catalogPath: "/catalog-info.yaml"  # Look for catalog-info.yaml in repo roots
+        filters:
+          branch: "main"  # Only scan main branch
+          repository: ".*"  # Scan all repositories
+          # repository: "rhdh-with-ansible$"  #
+        schedule:
+          frequency:
+            minutes: 30
+          initialDelay:
+            seconds: 15
+          timeout:
+            minutes: 15
+
+    # Ansible templates location
+    locations:
+    - rules:
+        - allow: [Component, System, API, Template, Location, Resource, User, Group, Domain]
+      target: https://github.com/openlab-red/rhdh-with-ansible/blob/main/catalog-info.yaml
+      type: url
+
+    # Keycloak user and group synchronization
+    keycloakOrg:
+      default:
+        baseUrl: "${KEYCLOAK_BASE_URL}"
+        loginRealm: "${KEYCLOAK_LOGIN_REALM}"
+        realm: "${KEYCLOAK_REALM}"
+        clientId: "${KEYCLOAK_CLIENT_ID}"
+        clientSecret: "${KEYCLOAK_CLIENT_SECRET}"
+        schedule:
+          frequency:
+            minutes: 10
+          timeout:
+            minutes: 3
+          initialDelay:
+            seconds: 30
+
+# Authentication configuration
+auth:
+  # Backend authentication keys
+  keys:
+    - secret: ${BACKEND_SECRET}
+  environment: development
+  session:
+    secret: ${BACKEND_SECRET}
+  providers:
+    oidc:
+      development:
+        metadataUrl: "${KEYCLOAK_BASE_URL}/realms/${KEYCLOAK_REALM}/.well-known/openid-configuration"
+        clientId: "${KEYCLOAK_CLIENT_ID}"
+        clientSecret: "${KEYCLOAK_CLIENT_SECRET}"
+        additionalScopes: "profile email"
+        prompt: auto
+        callbackUrl: "${BASE_URL}/api/auth/oidc/handler/frame"
+        tokenEndpointAuthMethod: client_secret_post
+        signIn:
+          resolvers:
+            - resolver: preferredUsernameMatchingUserEntityName
+
+# Sign-in page configuration
+enableExperimentalRedirectFlow: true
+signInPage: oidc
+
+# Scaffolder configuration to enable templates
+scaffolder:
+  # Set the default owner for new components
+  defaultAuthor:
+    name: Developer Hub
+    email: devhub@example.com
+  # Default values for scaffolder
+  defaultCommitMessage: "Initial commit from Developer Hub"
+
+# Kubernetes plugin configuration (if using)
+kubernetes:
+  serviceLocatorMethod:
+    type: 'multiTenant'
+  clusterLocatorMethods:
+    - type: 'config'
+      clusters:
+        - url: ${K8S_CLUSTER_URL}
+          name: openshift
+          authProvider: 'serviceAccount'
+          skipTLSVerify: false
+          serviceAccountToken: ${K8S_SERVICE_ACCOUNT_TOKEN}
+
+# TechDocs configuration (if using)
+techdocs:
+  builder: 'local'
+  generator:
+    runIn: 'local'
+  publisher:
+    type: 'local'
+
+# Permission configuration - RBAC enabled
+permission:
+  enabled: true
+  rbac:
+    conditionalPoliciesFile: /opt/app-root/src/rbac-conditional-policies.yaml
+    policies-csv-file: /opt/app-root/src/rbac-policies.csv
+    policyFileReload: true
+    admin:
+      users:
+        - name: user:default/admin
+        - name: user:default/rhdh-admin
+      superUsers:
+        - name: user:default/rhdh-admin
+    pluginsWithPermission:
+      - catalog
+      - scaffolder
+      - permission
+      - ansible
+      - bulk-import
+      - orchestrator
+
+# Enable Keycloak backend module for user/group sync
+enabled:
+  keycloak: true
+
+dynamicPlugins:
+  frontend:
+    default.main-menu-items:
+      menuItems:
+        default.create:
+          title: Self Service
+          icon: add
+          to: create
+          priority: 50
+          enabled: true

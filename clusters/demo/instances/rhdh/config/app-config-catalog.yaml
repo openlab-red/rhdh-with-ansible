@@ -1,0 +1,18 @@
+catalog:
+  providers:
+    rhaap:
+      development:
+        orgs: Default
+        sync:
+          # Sync users, teams, and organizations
+          orgsUsersTeams:
+            schedule:
+              frequency: { minutes: 60 }
+              timeout: { minutes: 15 }
+          # Sync job templates (optional)
+          jobTemplates:
+            enabled: true
+            schedule:
+              frequency: { minutes: 60 }
+              timeout: { minutes: 15 }
+              minutes: 15

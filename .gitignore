@@ -48,8 +48,14 @@ Desktop.ini
 
 .rhsm
 
-ansible-plugins-extracted*/
+ansible-plugins*/
 .cursor/
 
-.secrets/
+**/.secrets/**/*secret*.yaml
 *.tgz
+
+.venv-awx/
+
+AGENTS.md
+.env
+logs/

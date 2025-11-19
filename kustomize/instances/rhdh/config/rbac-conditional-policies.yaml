@@ -1,0 +1,168 @@
+# Conditional RBAC Policies for RHDH
+# These policies allow for more fine-grained access control based on conditions
+---
+result: CONDITIONAL
+roleEntityRef: role:default/rhdh-admin-role
+pluginId: catalog
+resourceType: catalog-entity
+permissionMapping:
+  - read
+  - create
+  - update
+  - delete
+conditions:
+  rule: HAS_ANNOTATION
+  resourceType: catalog-entity
+  params:
+    annotation: backstage.io/managed-by
+    value: rhdh-admin
+---
+# Template-user can update/delete only entities they own
+result: CONDITIONAL
+roleEntityRef: role:default/template-user
+pluginId: catalog
+resourceType: catalog-entity
+permissionMapping:
+  - update
+  - delete
+conditions:
+  rule: IS_ENTITY_OWNER
+  resourceType: catalog-entity
+  params:
+    claims:
+      - $currentUser
+---
+# Template-user can read:
+# - Entities they own
+# - Component, API, System entities
+# - Templates WITHOUT the ansible-dev label
+result: CONDITIONAL
+roleEntityRef: role:default/template-user
+pluginId: catalog
+resourceType: catalog-entity
+permissionMapping:
+  - read
+conditions:
+  anyOf:
+    - rule: IS_ENTITY_OWNER
+      resourceType: catalog-entity
+      params:
+        claims:
+          - $ownerRefs
+    - rule: IS_ENTITY_KIND
+      resourceType: catalog-entity
+      params:
+        kinds:
+          - Component
+          - API
+          - System
+          - Group
+          - User
+          - Domain
+          - Resource
+          - Location
+    - allOf:
+        - rule: IS_ENTITY_KIND
+          resourceType: catalog-entity
+          params:
+            kinds:
+              - Template
+        - not:
+            rule: HAS_LABEL
+            resourceType: catalog-entity
+            params:
+              label: ansible-dev
+---
+# Ansible-template-user can read ALL templates (no label restriction)
+result: CONDITIONAL
+roleEntityRef: role:default/ansible-template-user
+pluginId: catalog
+resourceType: catalog-entity
+permissionMapping:
+  - read
+conditions:
+  anyOf:
+    - rule: IS_ENTITY_OWNER
+      resourceType: catalog-entity
+      params:
+        claims:
+          - $ownerRefs
+    - rule: IS_ENTITY_KIND
+      resourceType: catalog-entity
+      params:
+        kinds:
+          - Component
+          - API
+          - System
+          - Group
+          - User
+          - Domain
+          - Resource
+          - Location
+          - Template
+---
+# Ansible-template-user can update/delete only entities they own
+result: CONDITIONAL
+roleEntityRef: role:default/ansible-template-user
+pluginId: catalog
+resourceType: catalog-entity
+permissionMapping:
+  - update
+  - delete
+conditions:
+  rule: IS_ENTITY_OWNER
+  resourceType: catalog-entity
+  params:
+    claims:
+      - $currentUser
+---
+# Template-user can create tasks ONLY for templates WITHOUT ansible-dev tag
+result: CONDITIONAL
+roleEntityRef: role:default/template-user
+pluginId: scaffolder
+resourceType: scaffolder-template
+permissionMapping:
+  - read
+conditions:
+  not:
+    rule: HAS_TAG
+    resourceType: scaffolder-template
+    params:
+      tag: ansible-dev
+---
+# Ansible-template-user can create tasks for ALL templates (including ansible-dev)
+result: CONDITIONAL
+roleEntityRef: role:default/ansible-template-user
+pluginId: scaffolder
+resourceType: scaffolder-template
+permissionMapping:
+  - read
+conditions:
+  anyOf:
+    - rule: HAS_TAG
+      resourceType: scaffolder-template
+      params:
+        tag: automation
+    - rule: HAS_TAG
+      resourceType: scaffolder-template
+      params:
+        tag: ansible-dev
+---
+result: CONDITIONAL
+roleEntityRef: role:default/bulk-import
+pluginId: bulk-import
+resourceType: bulk.import
+permissionMapping:
+  - use
+conditions:
+  anyOf:
+    - rule: HAS_ANNOTATION
+      resourceType: catalog-entity
+      params:
+        annotation: backstage.io/techdocs-ref
+    - rule: IS_ENTITY_KIND
+      resourceType: catalog-entity
+      params:
+        kinds:
+          - Component
+          - API

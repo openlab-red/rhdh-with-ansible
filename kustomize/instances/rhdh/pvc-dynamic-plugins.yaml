@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dynamic-plugins-root
+  namespace: rhdh
+  labels:
+    app.kubernetes.io/name: red-hat-developer-hub
+    app.kubernetes.io/instance: developer-hub
+    app.kubernetes.io/component: dynamic-plugins-cache
+spec:
+  accessModes:
+    - ReadWriteOnce  # Use ReadWriteMany if you need multiple replicas
+  resources:
+    requests:
+      storage: 20Gi  # Increased from 5Gi for better plugin storage
+  # Optional: Specify storage class if needed
+  # storageClassName: fast-ssd

@@ -1,0 +1,14 @@
+# Group: Application Development Team
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: app-dev-team
+  description: Application Development Team responsible for business applications
+spec:
+  type: team
+  parent: openlab-red
+  children: []
+  members:
+    - user:default/app-lead
+    - user:default/app-developer-1
+    - user:default/app-developer-2

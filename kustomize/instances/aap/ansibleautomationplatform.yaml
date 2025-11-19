@@ -1,0 +1,18 @@
+apiVersion: aap.ansible.com/v1alpha1
+kind: AnsibleAutomationPlatform
+metadata:
+  name: aap
+  namespace: aap
+spec:
+  # Controller configuration
+  controller:
+    disabled: false
+  # Automation Hub configuration (disabled for now)
+  hub:
+    disabled: true
+  # Event-Driven Ansible configuration (disabled for now)
+  eda:
+    disabled: true
+  # Shared PostgreSQL configuration
+  postgres:
+    enabled: true

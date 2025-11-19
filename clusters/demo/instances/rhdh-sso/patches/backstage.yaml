@@ -1,0 +1,17 @@
+apiVersion: rhdh.redhat.com/v1alpha4
+kind: Backstage
+metadata:
+  name: developer-hub
+spec:
+  application:
+    extraEnvs:
+      envs:
+        - name: ENABLE_AUTH_PROVIDER_MODULE_OVERRIDE
+          value: "false"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: BASE_URL
+          value: "https://backstage-developer-hub-rhdh-sso.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+        # SonataFlow Data Index URL for Orchestrator plugin
+        - name: ORCHESTRATOR_DATA_INDEX_URL
+          value: "http://sonataflow-platform-data-index-service"

@@ -1,0 +1,21 @@
+# Resource: Keycloak Authentication
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: keycloak-auth
+  description: RH-SSO/Keycloak authentication service
+  annotations:
+    backstage.io/kubernetes-id: keycloak
+    backstage.io/kubernetes-namespace: rhsso
+  tags:
+    - authentication
+    - security
+    - rhsso
+  links:
+    - url: https://keycloak-rhsso.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com
+      title: Keycloak Console
+      icon: dashboard
+spec:
+  type: authentication-provider
+  owner: platform-team
+  system: developer-hub-system

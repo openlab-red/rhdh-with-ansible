@@ -1,0 +1,106 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name:  ansible-workflow-rbac
+  title: Ansible Workflow Test RBAC
+  description: Test an AAP workflow by name
+  labels:
+    ansible-dev: "true"
+  tags:
+    - automation
+    - ansible
+    - aap
+    - ansible-dev
+spec:
+  owner: platform-team
+  type: automation
+  parameters:
+    - title: Workflow Configuration
+      required:
+        - organizationId
+        - workflowName
+      properties:
+        organizationId:
+          title: Organization ID
+          type: integer
+          description: Numeric identifier of the AAP organization that hosts the workflow template.
+          default: 1
+        workflowName:
+          title: Workflow Name
+          type: string
+          description: User-facing name of the workflow template to launch.
+        extraVars:
+          title: Extra Variables (YAML)
+          type: string
+          description: Optional variables in YAML format for the workflow
+          default: |
+            example_var: example_value
+            rhdh_environment: dev
+          ui:widget: textarea
+          ui:rows: 5
+          ui:help: 'Enter variables in YAML format'
+
+  steps:
+    - id: get-aap-config
+      name: Retrieve AAP Configuration
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/gateway/v1/settings/configuration/
+        continueOnBadResponse: false
+
+    - id: show-inputs
+      name: Show selected configuration
+      action: debug:log
+      input:
+        message: |
+          === WORKFLOW EXECUTION CONTEXT ===
+          Organization: ${{ parameters.organizationId }}
+          Workflow: ${{ parameters.workflowName }}
+          Extra Vars: ${{ parameters.extraVars }}
+          AAP URL: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}
+
+    - id: lookup-workflow
+      name: Lookup workflow template
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/controller/v2/workflow_job_templates/?name=${{ parameters.workflowName }}&organization=${{ parameters.organizationId }}
+        continueOnBadResponse: true
+
+    - id: log-lookup-responses
+      name: Show lookup responses
+      action: debug:log
+      input:
+        message: |
+          === LOOKUP RESPONSES ===
+          lookup HTTP status: ${{ steps['lookup-workflow'].output.code }}
+          lookup body:
+          ${{ steps['lookup-workflow'].output.body | dump }}
+
+    - id: launch-workflow
+      name: Launch workflow template
+      if: ${{ steps['lookup-workflow'].output.body.results[0] }}
+      action: http:backstage:request
+      input:
+        method: POST
+        path: /proxy/api/controller/v2/workflow_job_templates/${{ steps['lookup-workflow'].output.body.results[0].id }}/launch/
+        headers:
+          Content-Type: application/json
+        body:
+          extra_vars: ${{ parameters.extraVars }}
+
+  output:
+    links:
+      - title: View workflow job in AAP
+        url: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}/#/jobs/workflow/${{ steps['launch-workflow'].output.body.id }}
+        if: ${{ steps['launch-workflow'].output.body.id }}
+    text:
+      - title: Result
+        content: |
+          === EXECUTION SUMMARY ===
+          AAP URL: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}
+
+          Workflow: ${{ parameters.workflowName }}
+          Job ID: ${{ steps['launch-workflow'].output.body.id | default('N/A') }}
+          Status: ${{ steps['launch-workflow'].output.body.status | default('not launched') }}

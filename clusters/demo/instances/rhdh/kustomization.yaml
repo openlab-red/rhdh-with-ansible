@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rhdh
+
+resources:
+# Injecting the secrets from the .secrets directory into the base directory
+# demo only - Use ESO/Vault for production
+  - ../../.secrets/instances/rhdh
+
+configMapGenerator:
+  - name: app-config-auth
+    options:
+      disableNameSuffixHash: true
+    files:
+      - app-config-auth.yaml=config/app-config-auth.yaml
+
+  - name: app-config-catalog
+    options:
+      disableNameSuffixHash: true
+    files:
+      - app-config-catalog.yaml=config/app-config-catalog.yaml
+
+  - name: dynamic-plugins
+    behavior: replace
+    options:
+      disableNameSuffixHash: true
+    files:
+      - dynamic-plugins.yaml=config/dynamic-plugins.yaml
+patches:
+  - path: patches/backstage.yaml
+    target:
+      kind: Backstage
+      name: developer-hub

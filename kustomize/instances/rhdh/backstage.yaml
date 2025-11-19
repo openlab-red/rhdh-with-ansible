@@ -1,0 +1,90 @@
+apiVersion: rhdh.redhat.com/v1alpha4
+kind: Backstage
+metadata:
+  name: developer-hub
+spec:
+  application:
+# use custom image with plugins installed
+    # image: quay.io/mmascia/rhdh:latest
+    appConfig:
+      configMaps:
+        - name: app-config-rhdh
+    dynamicPluginsConfigMapName: dynamic-plugins  # Single dynamic plugins ConfigMap
+    extraFiles:
+      mountPath: /opt/app-root/src
+      configMaps:
+        - name: rbac-policies  # RBAC policies ConfigMap
+    replicas: 1
+    # Add environment variables from secrets
+    extraEnvs:
+      secrets:
+        - name: rhdh-client-secret
+        - name: my-rhdh-secrets
+        - name: rhdh-secrets-github-app  # GitHub App integration secret
+        - name: ansible-platform  # Ansible Automation Platform credentials
+        - name: rhdh-api-token  # RHDH API token
+      envs:
+        - name: ENABLE_AUTH_PROVIDER_MODULE_OVERRIDE
+          value: "false"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: BASE_URL
+          value: "https://backstage-developer-hub-rhdh.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+        # SonataFlow Data Index URL for Orchestrator plugin
+        - name: ORCHESTRATOR_DATA_INDEX_URL
+          value: "http://sonataflow-platform-data-index-service"
+  database:
+    enableLocalDb: true
+    postgresqlDataPersistentVolumeClaim:
+      resources:
+        requests:
+          storage: 10Gi  # Increased from 5Gi for better performance
+  
+  # Resource limits and requests
+  resources:
+    backstage:
+      limits:
+        memory: "2Gi"
+        cpu: "1000m"
+      requests:
+        memory: "1Gi"
+        cpu: "500m"
+  
+  # Deployment patch for dynamic plugins cache and Ansible sidecar
+  deployment:
+    patch:
+      spec:
+        template:
+          spec:
+            # initContainers:
+            #- name: install-dynamic-plugins
+            #  imagePullPolicy: Always
+            serviceAccountName: developer-hub  # Ensure proper SA is used
+            # Replace the default dynamic-plugins-root volume with PVC
+            volumes:
+              # Dynamic plugins cache volume - using PVC for persistence
+              - $patch: replace
+                name: dynamic-plugins-root
+                persistentVolumeClaim:
+                  claimName: dynamic-plugins-root
+              # Ansible workspace volume
+              - name: ansible-workspace
+                emptyDir: {}
+            containers:
+              - name: backstage-backend
+                imagePullPolicy: Always
+              - command:
+                  - adt
+                  - server
+                image: registry.redhat.io/ansible-automation-platform-25/ansible-dev-tools-rhel8:latest
+                imagePullPolicy: Always
+                ports:
+                  - containerPort: 8000
+                    protocol: TCP
+                terminationMessagePolicy: File
+                name: ansible-dev-tools
+                volumeMounts:
+                  - mountPath: /workspace
+                    name: ansible-workspace
+  monitoring:
+    enabled: true

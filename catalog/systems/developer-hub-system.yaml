@@ -1,0 +1,11 @@
+# System: Developer Hub
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: developer-hub-system
+  description: Red Hat Developer Hub platform system
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  owner: platform-team
+  domain: platform-engineering

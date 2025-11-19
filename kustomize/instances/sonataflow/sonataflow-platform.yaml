@@ -1,0 +1,22 @@
+apiVersion: sonataflow.org/v1alpha08
+kind: SonataFlowPlatform
+metadata:
+  name: sonataflow-platform
+  namespace: sonataflow
+spec:
+  devMode:
+    # Enable dev mode for ephemeral deployments (no persistence)
+    enabled: true
+  services:
+    dataIndex:
+      enabled: true
+      podTemplate:
+        container:
+          resources:
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+

@@ -1,0 +1,21 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: sonataflow-data-index
+  namespace: sonataflow
+  labels:
+    app: sonataflow-data-index
+    app.kubernetes.io/component: data-index
+    app.kubernetes.io/part-of: sonataflow
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: sonataflow-platform-data-index-service
+    weight: 100
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+

@@ -1,0 +1,303 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: namespace-provisioning
+  title: Create OpenShift Namespace
+  description: |
+    Self-service namespace creation with customization options.
+    Includes approval workflow for four-eyes principle.
+  tags:
+    - openshift
+    - namespace
+    - self-service
+    - recommended
+  links:
+    - title: Documentation
+      url: https://docs.example.com/namespace-provisioning
+  annotations:
+    backstage.io/aap-workflow: "create-namespace-workflow"
+spec:
+  owner: platform-team
+  type: infrastructure
+  
+  parameters:
+    # Step 1: Namespace Information
+    - title: Namespace Information
+      required:
+        - my_namespace
+        - my_quota_name
+      properties:
+        my_namespace:
+          title: Namespace Name
+          type: string
+          description: |
+            Name for your namespace (RFC 1123 DNS label).
+            Must be lowercase, alphanumeric, and may contain hyphens.
+            Maximum 63 characters. Must start and end with alphanumeric.
+          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+          minLength: 1
+          maxLength: 63
+          ui:autofocus: true
+          ui:help: "Example: my-project-dev, team-alpha-prod"
+          ui:placeholder: "my-namespace"
+        
+        my_quota_name:
+          title: Resource Quota Name
+          type: string
+          description: |
+            Name for the ResourceQuota object (RFC 1123 DNS label).
+            Must be lowercase, alphanumeric, and may contain hyphens.
+          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+          minLength: 1
+          maxLength: 63
+          ui:help: "Example: default-quota, compute-resources"
+          ui:placeholder: "default-quota"
+    
+    # Step 2: CPU Resources
+    - title: CPU Resources
+      description: |
+        Define CPU requests and limits for the namespace quota.
+        Use Kubernetes resource units: millicores (m) or cores.
+        Examples: 100m, 500m, 1, 2, 4
+      required:
+        - my_cpu_request
+        - my_cpu_limit
+      properties:
+        my_cpu_request:
+          title: CPU Request
+          type: string
+          description: |
+            Total CPU requests allowed in the namespace.
+            Format: number with optional 'm' suffix for millicores.
+            Examples: 100m (0.1 core), 500m (0.5 core), 1 (1 core), 2 (2 cores)
+          pattern: '^([0-9]+m?|[0-9]+\.[0-9]+)$'
+          ui:help: "Sum of all container CPU requests cannot exceed this value"
+          ui:placeholder: "500m"
+        
+        my_cpu_limit:
+          title: CPU Limit
+          type: string
+          description: |
+            Total CPU limits allowed in the namespace.
+            Format: number with optional 'm' suffix for millicores.
+            Must be >= CPU Request. Examples: 1, 2, 4, 1000m
+          pattern: '^([0-9]+m?|[0-9]+\.[0-9]+)$'
+          ui:help: "Sum of all container CPU limits cannot exceed this value"
+          ui:placeholder: "1"
+    
+    # Step 3: Memory Resources
+    - title: Memory Resources
+      description: |
+        Define Memory requests and limits for the namespace quota.
+        Use Kubernetes resource units: Ki, Mi, Gi, Ti, Pi, Ei or decimal: k, M, G, T, P, E.
+        Examples: 128Mi, 256Mi, 1Gi, 2Gi, 4Gi
+      required:
+        - my_memory_request
+        - my_memory_limit
+      properties:
+        my_memory_request:
+          title: Memory Request
+          type: string
+          description: |
+            Total memory requests allowed in the namespace.
+            Format: number with unit suffix (Ki, Mi, Gi, Ti).
+            Examples: 128Mi, 256Mi, 512Mi, 1Gi, 2Gi
+          pattern: '^[0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)?$'
+          ui:help: "Sum of all container memory requests cannot exceed this value"
+          ui:placeholder: "512Mi"
+        
+        my_memory_limit:
+          title: Memory Limit
+          type: string
+          description: |
+            Total memory limits allowed in the namespace.
+            Format: number with unit suffix (Ki, Mi, Gi, Ti).
+            Must be >= Memory Request. Examples: 1Gi, 2Gi, 4Gi
+          pattern: '^[0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)?$'
+          ui:help: "Sum of all container memory limits cannot exceed this value"
+          ui:placeholder: "1Gi"
+    
+    # Step 4: Storage Resources (Optional)
+    - title: Storage Resources
+      description: |
+        Define storage request for the namespace quota (optional).
+        Use Kubernetes resource units: Ki, Mi, Gi, Ti.
+        Examples: 1Gi, 10Gi, 100Gi
+      properties:
+        my_storage_request:
+          title: Storage Request
+          type: string
+          description: |
+            Total storage requests allowed in the namespace.
+            Format: number with unit suffix (Ki, Mi, Gi, Ti).
+            Leave empty for unlimited storage.
+            Examples: 1Gi, 5Gi, 10Gi, 50Gi, 100Gi
+          pattern: '^([0-9]+(\.[0-9]+)?(Ki|Mi|Gi|Ti|Pi|Ei|k|M|G|T|P|E)?)?$'
+          ui:help: "Sum of all PVC storage requests cannot exceed this value"
+          ui:placeholder: "10Gi"
+  
+  steps:
+    # Step 1: Retrieve AAP Configuration
+    - id: get-aap-config
+      name: Retrieve AAP Configuration
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/gateway/v1/settings/configuration/
+        continueOnBadResponse: false
+    
+    # Step 2: Prepare Workflow Variables
+    - id: prepare-variables
+      name: Prepare AAP Workflow Variables
+      action: debug:log
+      input:
+        message: |
+          Preparing namespace provisioning request:
+          - Namespace: ${{ parameters.my_namespace }}
+          - Quota Name: ${{ parameters.my_quota_name }}
+          - CPU Request: ${{ parameters.my_cpu_request }}
+          - CPU Limit: ${{ parameters.my_cpu_limit }}
+          - Memory Request: ${{ parameters.my_memory_request }}
+          - Memory Limit: ${{ parameters.my_memory_limit }}
+          - Storage Request: ${{ parameters.my_storage_request }}
+          - User: ${{ user.entity.metadata.name }}
+          - User Email: ${{ user.entity.spec.profile.email }}
+          - AAP URL: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}
+    
+    # Step 3: Lookup AAP Workflow Template
+    - id: lookup-workflow
+      name: Find Namespace Provisioning Workflow
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/controller/v2/workflow_job_templates/
+        params:
+          name: "create-namespace-workflow"
+          organization: 1
+    
+    # Step 4: Launch Workflow
+    - id: launch-workflow
+      name: Launch Namespace Creation Workflow
+      action: http:backstage:request
+      input:
+        method: POST
+        path: "/proxy/api/controller/v2/workflow_job_templates/${{ steps['lookup-workflow'].output.body.results[0].id }}/launch/"
+        headers:
+          X-User-Email: "${{ user.entity.spec.profile.email }}"
+          X-User-Name: "${{ user.entity.metadata.name }}"
+          Content-Type: application/json
+        body:
+          extra_vars:
+            my_namespace: "${{ parameters.my_namespace }}"
+            my_quota_name: "${{ parameters.my_quota_name }}"
+            my_cpu_request: "${{ parameters.my_cpu_request }}"
+            my_cpu_limit: "${{ parameters.my_cpu_limit }}"
+            my_memory_request: "${{ parameters.my_memory_request }}"
+            my_memory_limit: "${{ parameters.my_memory_limit }}"
+            my_storage_request: "${{ parameters.my_storage_request }}"
+            labels:
+              managed-by: "developer-hub"
+              created-by: "${{ user.entity.metadata.name }}"
+            annotations:
+              requested-by: "${{ user.entity.metadata.name }}"
+              requester-email: "${{ user.entity.spec.profile.email }}"
+    
+    # Step 5: Capture Job Information
+    - id: job-info
+      name: Capture Job Information
+      action: debug:log
+      input:
+        message: |
+          Workflow launched successfully!
+          Job ID: ${{ steps['launch-workflow'].output.body.id }}
+          Status: ${{ steps['launch-workflow'].output.body.status }}
+          
+          The namespace provisioning request has been submitted.
+    
+    # Step 6: Wait for workflow to start
+    - id: wait-for-workflow
+      name: Wait for Workflow Initialization
+      action: debug:wait
+      input:
+        seconds: 30
+    
+    # Step 7: Initial Status Check
+    - id: check-status
+      name: Check Workflow Status
+      action: http:backstage:request
+      input:
+        method: GET
+        path: "/proxy/api/controller/v2/workflow_jobs/${{ steps['launch-workflow'].output.body.id }}/"
+    
+    # Step 8: Create Catalog Entry
+    - id: create-catalog-entry
+      name: Register Namespace in Catalog
+      action: catalog:write
+      input:
+        entity:
+          apiVersion: backstage.io/v1alpha1
+          kind: Resource
+          metadata:
+            name: "${{ parameters.my_namespace }}-namespace"
+            title: "${{ parameters.my_namespace }}"
+            description: |
+              Namespace: ${{ parameters.my_namespace }}
+              Quota: ${{ parameters.my_quota_name }}
+              Created by: ${{ user.entity.metadata.name }}
+              
+              Resources:
+              - CPU Request: ${{ parameters.my_cpu_request }}
+              - CPU Limit: ${{ parameters.my_cpu_limit }}
+              - Memory Request: ${{ parameters.my_memory_request }}
+              - Memory Limit: ${{ parameters.my_memory_limit }}
+              - Storage Request: ${{ parameters.my_storage_request }}
+            annotations:
+              aap.io/job-id: "${{ steps['launch-workflow'].output.body.id }}"
+              aap.io/workflow-url: "${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}/execution/jobs/workflow/${{ steps['launch-workflow'].output.body.id }}"
+          spec:
+            type: openshift-namespace
+            owner: platform-team
+            system: openshift-cluster
+            lifecycle: production
+    
+    # Step 9: Display Summary
+    - id: summary
+      name: Display Summary
+      action: debug:log
+      input:
+        message: |
+          ============================================
+          NAMESPACE PROVISIONING REQUEST SUBMITTED
+          ============================================
+          
+          NAMESPACE CONFIGURATION:
+          - Namespace: ${{ parameters.my_namespace }}
+          - Quota Name: ${{ parameters.my_quota_name }}
+          
+          RESOURCE QUOTAS:
+          - CPU Request: ${{ parameters.my_cpu_request }}
+          - CPU Limit: ${{ parameters.my_cpu_limit }}
+          - Memory Request: ${{ parameters.my_memory_request }}
+          - Memory Limit: ${{ parameters.my_memory_limit }}
+          - Storage Request: ${{ parameters.my_storage_request }}
+          
+          TRACKING:
+          - AAP Job ID: ${{ steps['launch-workflow'].output.body.id }}
+          - View in AAP: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}/execution/jobs/workflow/${{ steps['launch-workflow'].output.body.id }}/details
+          
+          ============================================
+  
+  output:
+    links:
+      - title: View Workflow in AAP
+        url: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}/execution/jobs/workflow/${{ steps['launch-workflow'].output.body.id }}/details
+        if: ${{ steps['launch-workflow'].output.body.id }}
+    text:
+      - title: Execution Summary
+        content: |
+          Namespace: ${{ parameters.my_namespace }}
+          Job ID: ${{ steps['launch-workflow'].output.body.id }}
+          Status: ${{ steps['launch-workflow'].output.body.status }}
+    jobId: ${{ steps['launch-workflow'].output.body.id }}
+    namespaceName: "${{ parameters.my_namespace }}"
+    catalogEntityRef: "resource:default/${{ parameters.my_namespace }}-namespace"

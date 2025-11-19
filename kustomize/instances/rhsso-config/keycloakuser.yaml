@@ -1,0 +1,116 @@
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: rhdh-admin
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  user:
+    username: rhdh-admin
+    firstName: RHDH
+    lastName: Admin
+    email: rhdh-admin@example.com
+    emailVerified: true
+    enabled: true
+    credentials:
+      - type: password
+        value: admin123!
+        temporary: true # This is a temporary password, it will be changed after the first login
+    realmRoles:
+      - default-roles-rhdh
+    clientRoles:
+      account:
+        - manage-account
+        - view-profile
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: rhdh-developer
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  user:
+    username: rhdh-dev
+    firstName: RHDH
+    lastName: Developer
+    email: rhdh-dev@example.com
+    emailVerified: true
+    enabled: true
+    credentials:
+      - type: password
+        value: developer123!
+        temporary: true
+    realmRoles:
+      - default-roles-rhdh
+    clientRoles:
+      account:
+        - manage-account
+        - view-profile
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: rhdh-user
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  user:
+    username: rhdh-user
+    firstName: RHDH
+    lastName: User
+    email: rhdh-user@example.com
+    emailVerified: true
+    enabled: true
+    credentials:
+      - type: password
+        value: user123!
+        temporary: true
+    realmRoles:
+      - default-roles-rhdh
+    clientRoles:
+      account:
+        - manage-account
+        - view-profile
+---
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakUser
+metadata:
+  name: ansible-dev
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  user:
+    username: ansible-dev
+    firstName: RHDH
+    lastName: User
+    email: anasible-dev@example.com
+    emailVerified: true
+    enabled: true
+    credentials:
+      - type: password
+        value: ansible123!
+        temporary: true
+    realmRoles:
+      - default-roles-rhdh
+    clientRoles:
+      account:
+        - manage-account
+        - view-profile

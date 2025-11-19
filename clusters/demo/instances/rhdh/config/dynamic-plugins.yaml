@@ -1,0 +1,177 @@
+includes:
+  - dynamic-plugins.default.yaml
+
+plugins:
+  # Ansible plugins for Red Hat Developer Hub - AAP 2.5
+  # Version 2.0.1
+  
+  # Backend Plugin - Auth Backend Module for RHAAP Provider
+  - package: 'http://plugin-registry:8080/ansible-backstage-plugin-auth-backend-module-rhaap-provider-dynamic-2.0.1.tgz'
+    disabled: false
+    integrity: 'sha512-94mJmjhr6xPb4KkLpKT6nc3f3QAegyEF3x+3dRk2J84CIkhUm3mBn4J5xiyRAnvEBJrOiY0dAQCSJHeDaSUKZA=='
+  
+  # Frontend Plugin - Main Ansible UI
+  - package: 'http://plugin-registry:8080/ansible-plugin-backstage-rhaap-dynamic-2.0.1.tgz'
+    disabled: false
+    integrity: 'sha512-OPsA+ksrgaebMAjLV8PeXL50zr42tqu2hvCzOsuOXT+3gstE9yRzvKG2okEhkIPf3k7OnBnpB/RglSXpUZ4+qw=='
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          ansible.plugin-backstage-rhaap:
+            appIcons:
+              - importName: AnsibleLogo
+                name: AnsibleLogo
+            dynamicRoutes:
+              - importName: AnsiblePage
+                menuItem:
+                  icon: AnsibleLogo
+                  text: Ansible
+                path: /ansible
+  
+  # Frontend Plugin - Self Service Portal
+  - package: 'http://plugin-registry:8080/ansible-plugin-backstage-self-service-dynamic-2.0.1.tgz'
+    disabled: false
+    integrity: 'sha512-M/ZkyIm8o590pQ2q+kJOXovoAQNZE5i+ciAY/E9VN2eCp6qawa54QCXnLME4HIqBBDMR9lUOJZQYJ6Q1tNxvdg=='
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          ansible.plugin-backstage-self-service:
+            signInPage:
+              importName: SignInPage
+            providerSettings:
+              - title: Ansible Automation Platform
+                description: Sign in with Ansible Automation Platform
+                provider: ansible.auth.rhaap
+            scaffolderFieldExtensions:
+              - importName: AAPTokenFieldExtension
+              - importName: AAPResourcePickerExtension
+            dynamicRoutes:
+              - importName: LandingPage
+                path: /
+              - importName: SelfServicePage
+                path: /self-service
+            mountPoints:
+              - mountPoint: application/listener
+                importName: LocationListener
+  
+  # Backend Plugin - Scaffolder Backend Module for RHAAP Job Templates
+  - package: 'http://plugin-registry:8080/ansible-plugin-scaffolder-backend-module-backstage-rhaap-dynamic-2.0.1.tgz'
+    disabled: false
+    integrity: 'sha512-VOC8s1TpumDTJKFXMOrqpw/zPousW7GK3WvPpfzTvGE9pl1CqfIVOf8BOLkj84svgOhFgYglH2mOfKRDJ4CfGw=='
+    pluginConfig:
+      dynamicPlugins:
+        backend:
+          ansible.plugin-scaffolder-backend-module-backstage-rhaap:
+            mountPoints:
+              - importName: createAnsibleContentAction
+                mountPoint: entity.page.overview/cards
+  
+  # Backend Plugin - Catalog Backend Module for RHAAP
+  - package: 'http://plugin-registry:8080/ansible-backstage-plugin-catalog-backend-module-rhaap-dynamic-2.0.1.tgz'
+    disabled: false
+    integrity: 'sha512-VSRfaCajhmv77U+hge9eIln4nJ33P9vIMgYOoJjcOoe+w18vkqNRBqF0U/8JDEgSuy4PU1Y3lmD1DmrjmncZDA=='
+    pluginConfig:
+      dynamicPlugins:
+        catalog:
+          providers:
+            rhaap:
+              development:
+                orgs: Default
+                sync:
+                  # Sync users, teams, and organizations
+                  orgsUsersTeams:
+                    schedule:
+                      frequency: { minutes: 60 }
+                      timeout: { minutes: 15 }
+                  # Sync job templates (optional)
+                  jobTemplates:
+                    enabled: true
+                    schedule:
+                      frequency: { minutes: 60 }
+                      timeout: { minutes: 15 }
+  
+  # GitHub Catalog Discovery Backend Module
+  # This plugin enables automatic discovery of catalog-info.yaml files in GitHub repositories
+  # Documentation: https://docs.redhat.com/en/documentation/red_hat_developer_hub/1.8/html-single/integrating_red_hat_developer_hub_with_github/index
+  - package: './dynamic-plugins/dist/backstage-plugin-catalog-backend-module-github-dynamic'
+    disabled: false
+    pluginConfig:
+      catalog:
+        providers:
+          github:
+            # Configuration is in app-config.yaml
+  
+  # Bulk Import plugins for repository discovery
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-bulk-import-backend-dynamic
+    disabled: false
+  - package: ./dynamic-plugins/dist/red-hat-developer-hub-backstage-plugin-bulk-import
+    disabled: false
+  
+  # Keycloak Backend Module for User/Group Synchronization
+  # This plugin syncs users and groups from Keycloak to the RHDH catalog
+  - package: './dynamic-plugins/dist/backstage-community-plugin-catalog-backend-module-keycloak-dynamic'
+    disabled: false
+
+  # RBAC Plugin for Role-Based Access Control
+  - package: ./dynamic-plugins/dist/backstage-community-plugin-rbac
+    disabled: false
+
+  # Orchestrator UI - These are bundled with RHDH 1.4+
+  - package: "@redhat/backstage-plugin-orchestrator@1.8.2"
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          red-hat-developer-hub.backstage-plugin-orchestrator:
+            appIcons:
+              - name: orchestratorIcon
+                importName: OrchestratorIcon
+            dynamicRoutes:
+              - path: /orchestrator
+                importName: OrchestratorPage
+                menuItem:
+                  icon: orchestratorIcon
+                  text: Orchestrator
+            entityTabs:
+              - path: /workflows
+                title: Workflows
+                mountPoint: entity.page.workflows
+            mountPoints:
+              - mountPoint: entity.page.workflows/cards
+                importName: OrchestratorCatalogTab
+                config:
+                  layout:
+                    gridColumn: "1 / -1"
+                  if:
+                    anyOf:
+                      - IsOrchestratorCatalogTabAvailable
+  - package: "@redhat/backstage-plugin-orchestrator-backend-dynamic@1.8.2"
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        dataIndexService:
+          url: ${ORCHESTRATOR_DATA_INDEX_URL}
+  - package: "@redhat/backstage-plugin-scaffolder-backend-module-orchestrator-dynamic@1.8.2"
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        dataIndexService:
+          url: ${ORCHESTRATOR_DATA_INDEX_URL}
+  - package: "@redhat/backstage-plugin-orchestrator-form-widgets@1.8.2"
+    disabled: false
+    pluginConfig:
+      dynamicPlugins:
+        frontend:
+          red-hat-developer-hub.backstage-plugin-orchestrator-form-widgets: {}
+  - package: "./dynamic-plugins/dist/backstage-plugin-notifications"
+    disabled: false
+  - package: "./dynamic-plugins/dist/backstage-plugin-signals"
+    disabled: false
+  - package: "./dynamic-plugins/dist/backstage-plugin-notifications-backend-dynamic"
+    disabled: false
+  - package: "./dynamic-plugins/dist/backstage-plugin-signals-backend-dynamic"
+    disabled: false
+  
+  # HTTP Request Scaffolder Backend Module (already in image)
+  - package: "./dynamic-plugins/dist/roadiehq-scaffolder-backend-module-http-request-dynamic"
+    disabled: false

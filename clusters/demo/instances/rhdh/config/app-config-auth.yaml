@@ -1,0 +1,16 @@
+# RHAAP Authentication Provider Configuration
+auth:
+  providers:
+    rhaap:
+      development:
+        host: "${AAP_BASE_URL}"
+        checkSSL: false  # Set to true if AAP has valid SSL certificates
+        clientId: "${AAP_OAUTH_CLIENT_ID}"
+        clientSecret: "${AAP_OAUTH_CLIENT_SECRET}"
+        callbackUrl: "${BASE_URL}/api/auth/rhaap/handler/frame"
+        signIn:
+          resolvers:
+            # Use usernameMatchingUser to only allow users that already exist in the catalog
+            # This matches the behavior of the OIDC/Keycloak resolver
+            - resolver: usernameMatchingUser
+signInPage: rhaap

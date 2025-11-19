@@ -1,0 +1,51 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: aap-client
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  client:
+    clientId: aap
+    name: "Ansible Automation Platform"
+    description: "Client for AAP to authenticate users via Keycloak"
+    protocol: openid-connect
+    clientAuthenticatorType: client-secret
+    enabled: true
+    publicClient: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: true
+    serviceAccountsEnabled: false
+    authorizationServicesEnabled: false
+    redirectUris:
+      # AAP OIDC callback URLs - all possible patterns
+      - "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com/api/gateway/social/complete/*"
+    webOrigins:
+      - "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+    baseUrl: "https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+    defaultClientScopes:
+      - "web-origins"
+      - "roles"
+      - "profile"
+      - "email"
+      - "openid"
+    optionalClientScopes:
+      - "address"
+      - "phone"
+      - "offline_access"
+      - "microprofile-jwt"
+    protocolMappers:
+      - name: audience-mapper
+        protocol: openid-connect
+        protocolMapper: oidc-audience-mapper
+        consentRequired: false
+        config:
+          included.client.audience: aap
+          id.token.claim: "true"
+          access.token.claim: "true"
+

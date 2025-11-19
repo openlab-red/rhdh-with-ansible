@@ -1,0 +1,58 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rhdh
+
+resources:
+  - backstage.yaml
+  - pvc-dynamic-plugins.yaml
+  - secrets/secret-backend.yaml
+  - secrets/secret-github-app-integration.yaml
+  - secrets/secret-ansible-platform.yaml
+  - secrets/secret-api-token.yaml
+  - serviceaccount.yaml
+  - secrets/rhdh-client-secret.yaml
+
+
+# NOTE: Secret manifests contain placeholders; provide real values via the gitignored overlay in .secrets/instances/rhdh/base.
+
+# Configuration Maps using ConfigMapGenerator
+configMapGenerator:
+  # App configuration
+  - name: app-config-rhdh
+    options:
+      disableNameSuffixHash: true  # Disable suffix to maintain consistent name
+    files:
+      - app-config-rhdh.yaml=config/app-config-rhdh.yaml
+  
+  # Dynamic plugins configuration
+  - name: dynamic-plugins
+    options:
+      disableNameSuffixHash: true  # Disable suffix to maintain consistent name
+    files:
+      - dynamic-plugins.yaml=config/dynamic-plugins.yaml
+  
+  # RBAC policies configuration
+  - name: rbac-policies
+    options:
+      disableNameSuffixHash: true  # Disable suffix to maintain consistent name
+    files:
+      - rbac-policies.csv=config/rbac-policies.csv
+      - rbac-conditional-policies.yaml=config/rbac-conditional-policies.yaml
+
+secretGenerator: []
+
+# Patches (if needed)
+patches: []
+
+# Replace with your actual domain
+replicas: []
+
+# Common labels
+labels:
+  - pairs:
+      app.kubernetes.io/name: developer-hub
+      app.kubernetes.io/instance: rhdh
+      app.kubernetes.io/part-of: developer-hub
+    includeSelectors: true
+    includeTemplates: true
+

@@ -1,0 +1,98 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakClient
+metadata:
+  name: rhdh-client
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  realmSelector:
+    matchLabels:
+      app: sso
+  client:
+    clientId: rhdh
+    name: "Red Hat Developer Hub"
+    description: "OAuth Client for Red Hat Developer Hub"
+    protocol: openid-connect
+    clientAuthenticatorType: client-secret
+    enabled: true
+    publicClient: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: true
+    serviceAccountsEnabled: true
+    authorizationServicesEnabled: false
+    frontchannelLogout: false
+    redirectUris:
+      # Correct redirect URI for OIDC authentication in RHDH
+      - "https://backstage-developer-hub-rhdh.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com/api/auth/oidc/handler/frame"
+      - "https://backstage-developer-hub-rhdh-sso.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com/api/auth/oidc/handler/frame"
+    webOrigins:
+      - "https://backstage-developer-hub-rhdh.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+      - "https://backstage-developer-hub-rhdh-sso.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+      - "+"  # This allows redirect URIs to be valid web origins
+    baseUrl: "https://backstage-developer-hub-rhdh-sso.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+    defaultClientScopes:
+      - "web-origins"
+      - "roles"
+      - "profile"
+      - "email"
+      - "openid"  # Critical for OIDC
+    optionalClientScopes:
+      - "address"
+      - "phone"
+      - "offline_access"
+      - "microprofile-jwt"
+    protocolMappers:
+      - name: "groups"
+        protocol: "openid-connect"
+        protocolMapper: "oidc-group-membership-mapper"
+        consentRequired: false
+        config:
+          full.path: "true"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: "groups"
+          userinfo.token.claim: "true"
+      - name: "audience"
+        protocol: "openid-connect"
+        protocolMapper: "oidc-audience-mapper"
+        consentRequired: false
+        config:
+          included.client.audience: "rhdh"
+          id.token.claim: "false"
+          access.token.claim: "true"
+      # Add username mapper for RHDH
+      - name: "username"
+        protocol: "openid-connect"
+        protocolMapper: "oidc-usermodel-property-mapper"
+        consentRequired: false
+        config:
+          userinfo.token.claim: "true"
+          user.attribute: "username"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: "preferred_username"
+      # Add email verified mapper
+      - name: "email verified"
+        protocol: "openid-connect"
+        protocolMapper: "oidc-usermodel-property-mapper"
+        consentRequired: false
+        config:
+          userinfo.token.claim: "true"
+          user.attribute: "emailVerified"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: "email_verified"
+          jsonType.label: "boolean"
+  # Service account roles configuration
+  serviceAccountRealmRoles:
+    - "view-realm"
+    - "view-users"
+  serviceAccountClientRoles:
+    realm-management:
+      - "view-realm"
+      - "view-users"
+      - "query-users"
+      - "query-groups"
+      - "view-clients"

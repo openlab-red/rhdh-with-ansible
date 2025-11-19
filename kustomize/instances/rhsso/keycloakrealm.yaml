@@ -1,0 +1,24 @@
+apiVersion: keycloak.org/v1alpha1
+kind: KeycloakRealm
+metadata:
+  name: rhdh-realm
+  namespace: rhsso
+  labels:
+    app: sso
+spec:
+  instanceSelector:
+    matchLabels:
+      app: sso
+  realm:
+    id: rhdh
+    realm: rhdh
+    enabled: true
+    displayName: "Red Hat Developer Hub"
+    # Basic configuration without unsupported fields
+    resetPasswordAllowed: true
+    rememberMe: true
+    registrationAllowed: false
+    editUsernameAllowed: false
+    bruteForceProtected: true
+    permanentLockout: false
+    users: []

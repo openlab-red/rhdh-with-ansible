@@ -1,0 +1,22 @@
+# Component: Ansible Automation Platform Integration
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: aap-integration
+  description: Ansible Automation Platform integration service
+  annotations:
+    backstage.io/kubernetes-id: aap-controller
+    backstage.io/kubernetes-namespace: ansible-automation-platform
+  tags:
+    - ansible
+    - automation
+    - python
+  links:
+    - url: https://aap-aap.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com
+      title: Ansible Automation Platform
+      icon: dashboard
+spec:
+  type: service
+  lifecycle: production
+  owner: platform-team
+  system: developer-hub-system

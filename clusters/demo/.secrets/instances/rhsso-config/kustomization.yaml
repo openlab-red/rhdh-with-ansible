@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: rhsso
+
+resources:
+# Base directory of the kustomize instance
+  - ../../../../../kustomize/instances/rhsso-config
+
+patches: []

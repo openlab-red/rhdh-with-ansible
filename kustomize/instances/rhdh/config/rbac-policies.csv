@@ -1,0 +1,143 @@
+# RBAC Policies for RHDH
+# Format: permission_type, source:type/name, resource_type:name, action, result
+
+# Full Admin Role - comprehensive permissions for RHDH administrators
+# Catalog permissions
+p, role:default/rhdh-admin-role, catalog-entity, create, allow
+p, role:default/rhdh-admin-role, catalog-entity, read, allow
+p, role:default/rhdh-admin-role, catalog-entity, update, allow
+p, role:default/rhdh-admin-role, catalog-entity, delete, allow
+p, role:default/rhdh-admin-role, catalog.entity.refresh, use, allow
+p, role:default/rhdh-admin-role, catalog.location.read, read, allow
+p, role:default/rhdh-admin-role, catalog.location.create, create, allow
+p, role:default/rhdh-admin-role, catalog.location.delete, delete, allow
+
+# Scaffolder/Template permissions - Full access for admin
+p, role:default/rhdh-admin-role, scaffolder.template.read, read, allow
+p, role:default/rhdh-admin-role, scaffolder.template.parameter.read, read, allow
+p, role:default/rhdh-admin-role, scaffolder.template.step.read, read, allow
+p, role:default/rhdh-admin-role, scaffolder.template.create, create, allow
+p, role:default/rhdh-admin-role, scaffolder.template.update, update, allow
+p, role:default/rhdh-admin-role, scaffolder.template.delete, delete, allow
+p, role:default/rhdh-admin-role, scaffolder.action.use, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.execute, use, allow
+p, role:default/rhdh-admin-role, scaffolder.task.read, read, allow
+p, role:default/rhdh-admin-role, scaffolder.task.create, create, allow
+p, role:default/rhdh-admin-role, scaffolder.task.cancel, use, allow
+p, role:default/rhdh-admin-role, scaffolder.task.execute, use, allow
+# Allow all scaffolder actions for admin
+p, role:default/rhdh-admin-role, scaffolder, use, allow
+# Allow specific scaffolder actions
+p, role:default/rhdh-admin-role, scaffolder.action.debug:log, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.fetch:template, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.fetch:plain, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.catalog:write, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.catalog:register, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.fs:delete, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.fs:rename, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.debug:wait, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.http:backstage:request, use, allow
+# Allow Ansible/AAP actions
+p, role:default/rhdh-admin-role, scaffolder.action.rhaap:launch-job-template, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.rhaap:launch-workflow, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.rhaap:create-project, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.rhaap:create-job-template, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.rhaap:create-execution-environment, use, allow
+p, role:default/rhdh-admin-role, scaffolder.action.rhaap:clean-up, use, allow
+p, role:default/rhdh-admin-role, catalog.entity.create, create, allow
+
+# Permission plugin permissions (RBAC management)
+p, role:default/rhdh-admin-role, permission, read, allow
+p, role:default/rhdh-admin-role, permission, create, allow
+p, role:default/rhdh-admin-role, permission, update, allow
+p, role:default/rhdh-admin-role, permission, delete, allow
+p, role:default/rhdh-admin-role, policy.entity, read, allow
+p, role:default/rhdh-admin-role, policy.entity, create, allow
+p, role:default/rhdh-admin-role, policy.entity, update, allow
+p, role:default/rhdh-admin-role, policy.entity, delete, allow
+
+# Bulk Import permissions
+p, role:default/rhdh-admin-role, bulk.import, use, allow
+
+# Assign the rhdh-admin user to the admin role
+g, user:default/rhdh-admin, role:default/rhdh-admin-role
+
+# Other roles for regular users
+# Catalog admin role
+p, role:default/catalog-admin, catalog-entity, create, allow
+p, role:default/catalog-admin, catalog-entity, read, allow
+p, role:default/catalog-admin, catalog-entity, update, allow
+p, role:default/catalog-admin, catalog-entity, delete, allow
+p, role:default/catalog-admin, catalog.entity.refresh, use, allow
+p, role:default/catalog-admin, catalog.location.read, use, allow
+p, role:default/catalog-admin, catalog.location.create, use, allow
+p, role:default/catalog-admin, catalog.location.delete, use, allow
+
+# Template user role
+# Note: scaffolder-template read is controlled by conditional policy (HAS_TAG)
+p, role:default/template-user, scaffolder.template.parameter.read, read, allow
+p, role:default/template-user, scaffolder.template.step.read, read, allow
+p, role:default/template-user, scaffolder.action.use, use, allow
+p, role:default/template-user, catalog.entity.create, create, allow
+p, role:default/template-user, scaffolder.task.read, read, allow
+p, role:default/template-user, scaffolder.task.create, create, allow
+# Basic scaffolder actions for template users
+p, role:default/template-user, scaffolder.action.debug:log, use, allow
+p, role:default/template-user, scaffolder.action.fetch:template, use, allow
+p, role:default/template-user, scaffolder.action.fetch:plain, use, allow
+p, role:default/template-user, scaffolder.action.catalog:write, use, allow
+p, role:default/template-user, scaffolder.action.catalog:register, use, allow
+p, role:default/template-user, scaffolder.action.debug:wait, use, allow
+p, role:default/template-user, scaffolder.action.http:backstage:request, use, allow
+# Catalog entity permissions
+p, role:default/template-user, catalog-entity, read, allow
+p, role:default/template-user, catalog-entity, create, allow
+p, role:default/template-user, catalog.entity.refresh, use, allow
+
+
+# Note: Template-specific access control is handled via conditional policies
+# See rbac-conditional-policies.yaml for template filtering by labels
+
+# ===========================================
+# Ansible template user role - can see and use ansible-dev/ansible-dev templates
+# ===========================================
+# Note: scaffolder-template read is controlled by conditional policy (HAS_TAG)
+p, role:default/ansible-template-user, scaffolder.template.parameter.read, read, allow
+p, role:default/ansible-template-user, scaffolder.template.step.read, read, allow
+p, role:default/ansible-template-user, scaffolder.action.use, use, allow
+p, role:default/ansible-template-user, catalog-entity, read, allow
+p, role:default/ansible-template-user, catalog-entity, create, allow
+p, role:default/ansible-template-user, catalog.entity.refresh, use, allow
+p, role:default/ansible-template-user, scaffolder.task.read, read, allow
+p, role:default/ansible-template-user, scaffolder.task.create, create, allow
+# Basic scaffolder actions
+p, role:default/ansible-template-user, scaffolder.action.debug:log, use, allow
+p, role:default/ansible-template-user, scaffolder.action.fetch:template, use, allow
+p, role:default/ansible-template-user, scaffolder.action.fetch:plain, use, allow
+p, role:default/ansible-template-user, scaffolder.action.catalog:write, use, allow
+p, role:default/ansible-template-user, scaffolder.action.catalog:register, use, allow
+p, role:default/ansible-template-user, scaffolder.action.http:backstage:request, use, allow
+p, role:default/ansible-template-user, scaffolder.action.debug:wait, use, allow
+# Allow Ansible/AAP specific actions
+p, role:default/ansible-template-user, scaffolder.action.rhaap:launch-job-template, use, allow
+p, role:default/ansible-template-user, scaffolder.action.rhaap:launch-workflow, use, allow
+
+# ===========================================
+# User assignments
+# ===========================================
+# Admin user
+g, user:default/rhdh-admin, role:default/rhdh-admin-role
+
+# Regular user - cannot see ansible-dev templates
+g, user:default/rhdh-user, role:default/template-user
+
+# Ansible developer - can see and use ansible-dev/ansible-dev templates
+g, user:default/ansible-dev, role:default/ansible-template-user
+
+# Bulk import role
+p, role:default/bulk-import, bulk.import, use, allow
+
+# Assign roles to groups/users
+g, group:default/developers, role:default/template-user
+g, group:default/ansible-developers, role:default/ansible-template-user
+g, group:default/admins, role:default/catalog-admin

@@ -1,0 +1,26 @@
+# Component: RHDH Instance
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: rhdh-instance
+  description: Red Hat Developer Hub instance
+  annotations:
+    backstage.io/kubernetes-id: developer-hub
+    backstage.io/kubernetes-namespace: rhdh
+  tags:
+    - nodejs
+    - typescript
+    - backstage
+    - developer-portal
+  links:
+    - url: https://backstage-developer-hub-rhdh.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com
+      title: Developer Hub
+      icon: dashboard
+spec:
+  type: website
+  lifecycle: production
+  owner: platform-team
+  system: developer-hub-system
+  dependsOn:
+    - resource:default/keycloak-auth
+    - resource:default/rhdh-database

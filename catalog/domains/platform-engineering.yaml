@@ -1,0 +1,12 @@
+# Domain: Platform Engineering
+apiVersion: backstage.io/v1alpha1
+kind: Domain
+metadata:
+  name: platform-engineering
+  description: Platform engineering and infrastructure domain
+  links:
+    - url: https://github.com/openlab-red
+      title: GitHub Organization
+      icon: github
+spec:
+  owner: platform-team

@@ -1,0 +1,40 @@
+# Main catalog for openlab-red organization
+# This file serves as the root catalog that references all entity definitions
+#
+# To register this catalog in Backstage:
+# 1. Navigate to the Software Catalog page
+# 2. Click on "Register Existing Component"
+# 3. Enter the URL to this file in your repository
+
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: catalog
+  description: Main software catalog for Ansible Automation Platform integration
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  type: url
+  targets:
+    # Groups and Users
+    - ./catalog/groups/platform-team.yaml
+    - ./catalog/groups/app-dev-team.yaml
+    
+    # Domains
+    - ./catalog/domains/platform-engineering.yaml
+    
+    # Systems
+    - ./catalog/systems/developer-hub-system.yaml
+    
+    # Components
+    - ./catalog/components/rhdh-instance.yaml
+    - ./catalog/components/aap-integration.yaml
+    
+    # Resources
+    - ./catalog/resources/openshift-cluster.yaml
+    
+    # Templates - Ansible Automation Templates
+    - ./catalog/templates/ansible-workflow-test.yaml
+    - ./catalog/templates/ansible-workflow-rbac.yaml
+    - ./catalog/templates/ansible-job-launch-test.yaml
+    - ./catalog/templates/namespace-provisioning.yaml

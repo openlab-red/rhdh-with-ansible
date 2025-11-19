@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: aap
+
+resources:
+# Injecting the secrets from the .secrets directory into the base directory
+# Demo purpose only, real use External Secrets Operator or Vault
+  - ../../.secrets/instances/aap

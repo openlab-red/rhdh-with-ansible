@@ -1,0 +1,22 @@
+apiVersion: rhdh.redhat.com/v1alpha4
+kind: Backstage
+metadata:
+  name: developer-hub
+spec:
+  application:
+    appConfig:
+      configMaps:
+        - name: app-config-rhdh  # Base configuration
+        - name: app-config-auth  # Override for RHAAP authentication configuration
+        - name: app-config-catalog  # Override for RHAAP catalog configuration
+    extraEnvs:
+      envs:
+        - name: ENABLE_AUTH_PROVIDER_MODULE_OVERRIDE
+          value: "true"
+        - name: LOG_LEVEL
+          value: "info"
+        - name: BASE_URL
+          value: "https://backstage-developer-hub-rhdh.apps.cluster-ndb5l.ndb5l.sandbox500.opentlc.com"
+        # SonataFlow Data Index URL for Orchestrator plugin
+        - name: ORCHESTRATOR_DATA_INDEX_URL
+          value: "http://sonataflow-platform-data-index-service"

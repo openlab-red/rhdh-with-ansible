@@ -1,0 +1,164 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name:  ansible-workflow-test
+  title: Ansible Workflow Test
+  description: Test an AAP workflow by name
+  tags:
+    - automation
+    - ansible
+    - aap
+spec:
+  owner: platform-team
+  type: automation
+  parameters:
+    - title: Token Configuration
+      description: Provide one of the supported Automation Controller tokens.
+      required:
+        - patSecret
+        - basicAuth
+      properties:
+        patSecret:
+          title: Personal Access Token (PAT)
+          type: string
+          description: User-scoped PAT for debugging or delegated execution.
+          ui:field: Secret
+          ui:backstage:
+            review:
+              show: true
+        basicAuth:
+          title: Basic Auth Token
+          type: string
+          description: Base64 encoded "username:password" token. Create using `echo -n 'username:password' | base64`
+          ui:field: Secret
+          ui:backstage:
+            review:
+              show: true
+    - title: Workflow Configuration
+      required:
+        - organizationId
+        - workflowName
+      properties:
+        organizationId:
+          title: Organization ID
+          type: integer
+          description: Numeric identifier of the AAP organization that hosts the workflow template.
+          default: 1
+        workflowName:
+          title: Workflow Name
+          type: string
+          description: User-facing name of the workflow template to launch.
+        extraVars:
+          title: Extra Variables (YAML)
+          type: string
+          description: Optional variables in YAML format for the workflow
+          default: |
+            example_var: example_value
+            rhdh_environment: dev
+          ui:widget: textarea
+          ui:rows: 5
+          ui:help: 'Enter variables in YAML format'
+  steps:
+    - id: get-aap-config
+      name: Retrieve AAP Configuration
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/gateway/v1/settings/configuration/
+        headers:
+          Authorization: 'Bearer ${{ secrets.patSecret }}'
+        continueOnBadResponse: false
+
+    - id: show-inputs
+      name: Show selected configuration
+      action: debug:log
+      input:
+        message: |
+          === WORKFLOW EXECUTION CONTEXT ===
+          Organization: ${{ parameters.organizationId }}
+          Workflow: ${{ parameters.workflowName }}
+          Extra Vars: ${{ parameters.extraVars }}
+          AAP URL: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}
+
+    - id: lookup-workflow-pat
+      name: Lookup workflow template by name using PAT
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/controller/v2/workflow_job_templates/?name=${{ parameters.workflowName }}&organization=${{ parameters.organizationId }}
+        headers:
+          Authorization: 'Bearer ${{ secrets.patSecret }}'
+        continueOnBadResponse: true
+
+    - id: lookup-workflow-basic-auth
+      name: Lookup workflow template by name using Basic Auth
+      action: http:backstage:request
+      input:
+        method: GET
+        path: /proxy/api/controller/v2/workflow_job_templates/?name=${{ parameters.workflowName }}&organization=${{ parameters.organizationId }}
+        headers:
+          Authorization: 'Basic ${{ secrets.basicAuth }}'
+        continueOnBadResponse: true
+
+    - id: log-lookup-responses
+      name: Show lookup responses
+      action: debug:log
+      input:
+        message: |
+          === LOOKUP RESPONSES ===
+          PAT lookup HTTP status: ${{ steps['lookup-workflow-pat'].output.code }}
+          PAT lookup body:
+          ${{ steps['lookup-workflow-pat'].output.body | dump }}
+          Basic Auth lookup HTTP status: ${{ steps['lookup-workflow-basic-auth'].output.code }}
+          Basic Auth lookup body:
+          ${{ steps['lookup-workflow-basic-auth'].output.body | dump }}
+
+    - id: launch-workflow-pat
+      name: Launch workflow template with PAT
+      if: ${{ steps['lookup-workflow-pat'].output.body.results[0] }}
+      action: http:backstage:request
+      input:
+        method: POST
+        path: /proxy/api/controller/v2/workflow_job_templates/${{ steps['lookup-workflow-pat'].output.body.results[0].id }}/launch/
+        headers:
+          Authorization: 'Bearer ${{ secrets.patSecret }}'
+          Content-Type: application/json
+        body:
+          extra_vars: ${{ parameters.extraVars }}
+
+    - id: launch-workflow-basic-auth
+      name: Launch workflow template with Basic Auth
+      if: ${{ steps['lookup-workflow-basic-auth'].output.body.results[0] }}
+      action: http:backstage:request
+      input:
+        method: POST
+        path: /proxy/api/controller/v2/workflow_job_templates/${{ steps['lookup-workflow-basic-auth'].output.body.results[0].id }}/launch/
+        headers:
+          Authorization: 'Basic ${{ secrets.basicAuth }}'
+          Content-Type: application/json
+        body:
+          extra_vars: ${{ parameters.extraVars }}
+
+  output:
+    links:
+      - title: View PAT workflow job in AAP
+        url: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}/#/jobs/workflow/${{ steps['launch-workflow-pat'].output.body.id }}
+        if: ${{ steps['launch-workflow-pat'].output.body.id }}
+      - title: View Basic Auth workflow job in AAP
+        url: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}/#/jobs/workflow/${{ steps['launch-workflow-basic-auth'].output.body.id }}
+        if: ${{ steps['launch-workflow-basic-auth'].output.body.id }}
+    text:
+      - title: Result
+        content: |
+          === EXECUTION SUMMARY ===
+          AAP URL: ${{ steps['get-aap-config'].output.body.CSRF_TRUSTED_ORIGINS[0] }}
+
+          PAT launch:
+            Workflow: ${{ parameters.workflowName }}
+            Job ID: ${{ steps['launch-workflow-pat'].output.body.id | default('N/A') }}
+            Status: ${{ steps['launch-workflow-pat'].output.body.status | default('not launched') }}
+
+          Basic Auth launch:
+            Workflow: ${{ parameters.workflowName }}
+            Job ID: ${{ steps['launch-workflow-basic-auth'].output.body.id | default('N/A') }}
+            Status: ${{ steps['launch-workflow-basic-auth'].output.body.status | default('not launched') }}

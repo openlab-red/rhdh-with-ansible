@@ -1,0 +1,56 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: ansible
+  title: Quick Launch AAP Job
+  description: Minimal template to quickly launch an AAP Job template
+  tags:
+    - ansible
+    - aap
+    - job
+    - quick
+spec:
+  owner: platform-team
+  type: action
+  parameters:
+    - title: 'Job Configuration'
+      required:
+        - token
+      properties:
+        token:
+          title: Token
+          type: string
+          ui:field: AAPTokenField
+          ui:widget: hidden
+        jobTemplateName:
+          title: Job Template Name
+          type: string
+          description: Name of the job template to launch
+        extraVariables:
+          title: Extra Variables (Optional)
+          type: object
+          description: Optional variables in JSON/YAML format
+          ui:widget: textarea
+          ui:options:
+            rows: 5
+          default: {}
+
+  steps:
+    - id: launch
+      name: Launch Job
+      action: rhaap:launch-job-template
+      input:
+        token: ${{ parameters.token }}
+        values:
+          template: ${{ parameters.jobTemplateName }}
+          extraVariables: ${{ parameters.extraVariables }}
+
+  output:
+    text:
+      - title: Result
+        content: |
+          ✅ **Job Launched Successfully!**
+          
+          - **Job ID:** ${{ steps['launch'].output.jobId }}
+          - **Template:** ${{ parameters.jobTemplateName }}
+          - **Status:** ${{ steps['launch'].output.status }}

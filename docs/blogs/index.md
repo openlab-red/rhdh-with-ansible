@@ -33,6 +33,8 @@ graph LR
     style Jobs fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
 ```
 
+*Figure 1: Architecture overview showing the authentication flow between Developer, RHDH, AAP, and Keycloak*
+
 The authentication flow works like this:
 
 1. Developer accesses Red Hat Developer Hub (Developer Hub)
@@ -190,6 +192,8 @@ If you choose the console route:
 
 ![SSO AAP Client secret](../assets/aap-sso-client-secret.png)
 
+*Figure 2: Keycloak client credentials tab showing the AAP client secret*
+
 ## Step 3: Configure SSO Authentication in AAP
 
 This is where we connect AAP to use Keycloak for authentication. You can do this through the UI or API - I'll show you both approaches.
@@ -215,6 +219,8 @@ This is where we connect AAP to use Keycloak for authentication. You can do this
 
    ![AAP Auth](../assets/aap-auth.png)
 
+   *Figure 3: AAP Access Management - Create Authentication dialog*
+
 3. **Get the Keycloak Public Key**
    
    Before configuring AAP, you need the public key from Keycloak:
@@ -232,11 +238,15 @@ This is where we connect AAP to use Keycloak for authentication. You can do this
    
    ![Keycloak Public Key Location](../assets/sso-keys.png)
 
+   *Figure 4: Keycloak Realm Settings - Keys tab showing the RS256 public key*
+
 4. **Configure Keycloak Parameters in AAP**
    
    Fill in these fields exactly as shown:
 
    ![AAP Authentication Settings](../assets/aap-auth.png)
+
+   *Figure 5: AAP Authentication Settings configuration form*
 
    | Field | Value |
    |-------|-------|
@@ -311,6 +321,8 @@ After configuration, test that SSO is working:
 
 ![AAP SSO Login Screen](../assets/aap-sso-login.png)
 
+*Figure 6: AAP login screen with RH SSO option enabled*
+
 ## Step 4: Create OAuth Application in AAP for Developer Hub
 
 The final piece of the puzzle is creating an OAuth application in AAP that Developer Hub will use to allows Developer Hub to make API calls to AAP on behalf of users.
@@ -336,6 +348,8 @@ The final piece of the puzzle is creating an OAuth application in AAP that Devel
    | **Redirect URIs** | `https://backstage-developer-hub-rhdh.apps.YOUR-CLUSTER-DOMAIN.com/api/auth/rhaap/handler/frame` |
 
    ![AAP OAuth Application Configuration](../assets/aap-oauth.png)
+
+   *Figure 7: AAP OAuth Application configuration for RHDH integration*
 
 3. **Save and Capture Credentials**
 
@@ -423,6 +437,8 @@ echo "APP_OAUTH_CLIENT_SECRET=$APP_OAUTH_CLIENT_SECRET" >> .env
 
 ![AAP API Token](../assets/aap-api-token.png)
 
+*Figure 8: AAP User Details - API Tokens tab for generating access tokens*
+
 #### Method 2: Via API
 
 You can also generate tokens programmatically using the AAP API:
@@ -486,6 +502,8 @@ There's one critical setting in AAP that must be enabled for external OAuth inte
 5. Click **Save** to apply the changes
 
 ![AAP API Token](../assets/aap-gateway.png)
+
+*Figure 9: AAP Platform Gateway settings - Allow external users OAuth2 tokens option*
 
 ### Via API:
 
@@ -780,13 +798,19 @@ Start in the Ansible Automation Platform console and choose the RH-SSO option. T
 
 ![AAP SSO Sign-in](../assets/aap-signin-sso.png)
 
+*Figure 10: AAP login page with RH-SSO authentication option*
+
 After the AAP session is established, developers follow the link back to Red Hat Developer Hub. The portal now offers a "Sign in using Ansible Automation Platform" entry point—the same credentials, the same session, no surprise prompts:
 
 ![RHAAP Sign-in](../assets/rhaap-signin.png)
 
+*Figure 11: RHDH sign-in page with Ansible Automation Platform option*
+
 Because the OAuth handshake already exchanged tokens behind the scenes, RHDH opens directly to the Ansible experience. The landing page confirms that the session is active and ready to make API calls on the user’s behalf:
 
 ![RHDH with Ansible](../assets/rhdh-with-ansible.png)
+
+*Figure 12: RHDH landing page with Ansible integration active and session established*
 
 ### Launching Your First Job Template
 
@@ -794,17 +818,25 @@ To prove everything works end to end, the installation ships with a ready-made t
 
 ![Quick Job Launch Template](../assets/rhdh-quick-job-launch.png)
 
-If you’re bringing your own AAP environment, no extra clicks are required—the Ansible catalog provider continuously syncs job templates into Developer Hub. Opening the **Job Templates** tab reveals whatever lives in your controller today:
+*Figure 13: RHDH Catalog Templates view with Quick Launch entry*
+
+If you're bringing your own AAP environment, no extra clicks are required—the Ansible catalog provider continuously syncs job templates into Developer Hub. Opening the **Job Templates** tab reveals whatever lives in your controller today:
 
 ![Job Templates Synced](../assets/rhdh-job-sync.png)
+
+*Figure 14: RHDH Job Templates tab showing synced templates from AAP*
 
 Selecting a template brings up rich metadata (description, owner, type, tags) so teams can verify they picked the right automation before hitting the big blue button:
 
 ![Job Template Details](../assets/rhdh-job-tpl.png)
 
+*Figure 15: Job template details page with metadata and launch button*
+
 When you press **Launch**, the RHAAP provider automatically injects the OAuth token gathered during the sign-in flow, then streams the run output back to the UI. You can watch the playbook progress, track task execution, and confirm host status without leaving the portal:
 
 ![Job Launch Success](../assets/rhdh-job-launch.png)
+
+*Figure 16: Job launch execution output showing playbook progress and task status*
 
 ## Conclusion
 
